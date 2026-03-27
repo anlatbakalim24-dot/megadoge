@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+ 
+    <script src='//libtl.com/sdk.js' data-zone='10793774' data-sdk='show_10793774'></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Faucet Mini App</title>
@@ -148,36 +150,52 @@
     let claimInterval;
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/"; // 1. Adımda oluşturduğunuz URL
 
-    // 1. İşlem: Hak Talebini Başlat (Reklamı Göster)
-    function initiateClaim() {
-        const email = document.getElementById('userEmail').value;
-        if (!email.includes("@")) {
-            alert("Lütfen geçerli bir FaucetPay email adresi girin.");
-            return;
-        }
-        localStorage.setItem('faucetEmail', email);
-
-        // Reklam ekranını aç
-        document.getElementById('adOverlay').style.display = 'block';
-        let adSeconds = 15;
-        
-        let adCountdown = setInterval(() => {
-            adSeconds--;
-            document.getElementById('adTimer').innerText = adSeconds;
-            if (adSeconds <= 0) {
-                clearInterval(adCountdown);
-                document.getElementById('closeAdBtn').style.display = 'block';
-            }
-        }, 1000);
+    // 1. İşlem: Hak Talebini Başlat (Monetag Ödüllü Reklamı Göster)
+function initiateClaim() {
+    const email = document.getElementById('userEmail').value;
+    if (!email.includes("@")) {
+        alert("Lütfen geçerli bir FaucetPay email adresi girin.");
+        return;
     }
+    localStorage.setItem('faucetEmail', email);
+
+    // Monetag Ödüllü Reklamı Başlat
+    show_10793774('pop').then(() => {
+        // Reklam başarıyla izlendi veya kapatıldı, şimdi ödeme aşamasına geç
+        completeClaim(); 
+    }).catch(e => {
+        // Reklam yüklenemezse kullanıcıyı bilgilendir
+        alert("Reklam şu an hazır değil, lütfen 5 saniye sonra tekrar deneyin.");
+    });
+}
 
     // 2. İşlem: Reklam Kapandıktan Sonra Ödemeyi Yap
-    async function completeClaim() {
-        document.getElementById('adOverlay').style.display = 'none';
-        document.getElementById('closeAdBtn').style.display = 'none';
-        document.getElementById('adTimer').innerText = "15"; // Reset
+async function completeClaim() {
+    // Eski reklam katmanlarını gizlemeye gerek yok ama güvenlik için:
+    if(document.getElementById('adOverlay')) document.getElementById('adOverlay').style.display = 'none';
 
-        const email = localStorage.getItem('faucetEmail');
+    // Formu gizle, başarı ekranını göster (Eğer HTML'e eklediysen)
+    if(document.getElementById('faucetForm')) document.getElementById('faucetForm').style.display = 'none';
+    if(document.getElementById('successScreen')) document.getElementById('successScreen').style.display = 'block';
+
+    const email = localStorage.getItem('faucetEmail');
+    const btn = document.getElementById('claimBtn');
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        
+        // Ödeme başarılı mesajı yerine şık başarı ekranımız zaten görünüyor olacak
+    } catch (error) {
+        console.log("Ödeme sunucusuna bağlanılamadı.");
+    }
+
+    startMainTimer(60); // 60 saniyelik geri sayımı başlat
+}
         
         // Düğmeyi devre dışı bırak
         const btn = document.getElementById('claimBtn');
@@ -225,7 +243,19 @@
                 btn.innerText = "💰 Ödülü Topla";
             }
         }, 1000);
-    }
+
+    } 
+    // Uygulama içi otomatik geçiş reklamlarını aktif et
+show_10793774({
+  type: 'inApp',
+  inAppSettings: {
+    frequency: 2,
+    capping: 0.1,
+    interval: 30,
+    timeout: 5,
+    everyPage: false
+  }
+});
 </script>
 
 </body>
