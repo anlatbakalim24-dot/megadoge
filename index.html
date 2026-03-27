@@ -7,67 +7,15 @@
     <title>MegaDoge Faucet</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --tg-theme-bg-color: #ffffff;
-            --tg-theme-button-color: #0088cc;
-            --tg-theme-button-text-color: #ffffff;
-            --tg-theme-hint-color: #999999;
-        }
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            color: #333;
-        }
-        .container {
-            background: white;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        .faucet-name { color: var(--tg-theme-button-color); margin-bottom: 5px; font-size: 24px; font-weight: bold; }
-        .crypto-badge {
-            background: #fff9c4;
-            color: #fbc02d;
-            padding: 5px 15px;
-            border-radius: 50px;
-            font-size: 14px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 20px;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            box-sizing: border-box;
-            outline: none;
-        }
-        #claimBtn {
-            background-color: var(--tg-theme-button-color);
-            color: white;
-            border: none;
-            padding: 15px;
-            width: 100%;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        :root { --tg-theme-button-color: #0088cc; }
+        body { font-family: sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; width: 100%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .faucet-name { color: var(--tg-theme-button-color); font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; }
+        #claimBtn { background-color: var(--tg-theme-button-color); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
         #claimBtn:disabled { background-color: #ccc; }
         .timer-box { margin-top: 15px; font-weight: bold; color: #e53935; display: none; }
-        
-        /* Başarı Ekranı */
         #successScreen { display: none; padding: 20px; }
-        .check-icon { font-size: 50px; color: #4CAF50; }
     </style>
 </head>
 <body>
@@ -75,32 +23,22 @@
 <div class="container">
     <div id="faucetForm">
         <div class="faucet-name">MegaDoge Faucet</div>
-        <div class="crypto-badge">Ödeme Birimi: DOGE Coin</div>
-        <div class="user-welcome">Merhaba, <span id="tgUser">Kullanıcı</span>! 👋</div>
-        <p style="font-size: 14px; color: #666;">Her 1 dakikada bir ücretsiz DOGE kazanabilirsin.</p>
-        
-        <input type="email" id="userEmail" placeholder="FaucetPay Email Adresiniz">
+        <p>FaucetPay Email Adresiniz:</p>
+        <input type="email" id="userEmail" placeholder="email@example.com">
         <button id="claimBtn" onclick="initiateClaim()">💰 Ödülü Topla</button>
-        
-        <div id="mainWaitTimer" class="timer-box">
-            Yeni hak için bekle: <span id="timeLeft">60</span> saniye
-        </div>
+        <div id="mainWaitTimer" class="timer-box">Geri Sayım: <span id="timeLeft">60</span>s</div>
     </div>
 
     <div id="successScreen">
-        <div class="check-icon">✅</div>
-        <h2 style="color: #2e7d32;">ÖDEME TAMAM!</h2>
-        <p>Satoshi'ler FaucetPay hesabınıza gönderildi.</p>
-        <p style="font-size: 12px; color: #999;">Sayaç bitince tekrar alabilirsiniz.</p>
+        <h2 style="color: #4CAF50;">✅ BAŞARILI!</h2>
+        <p>Ödemeniz gönderildi. 60 saniye sonra tekrar deneyin.</p>
     </div>
 </div>
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
-    
-    document.getElementById('tgUser').innerText = tg.initDataUnsafe.user?.first_name || "Ziyaretçi";
-    
+
     const savedEmail = localStorage.getItem('faucetEmail');
     if(savedEmail) document.getElementById('userEmail').value = savedEmail;
 
@@ -109,23 +47,27 @@
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
         if (!email.includes("@")) {
-            alert("Lütfen geçerli bir FaucetPay email adresi girin.");
+            alert("Lütfen geçerli bir email girin.");
             return;
         }
         localStorage.setItem('faucetEmail', email);
 
-        // Monetag Reklamını Başlat
-        show_10793774('pop').then(() => {
-            completeClaim(); 
-        }).catch(e => {
-            completeClaim(); // Reklam hatası olsa bile ödemeye gönder (kullanıcı kaçmasın)
-        });
+        // REKLAMI ÇAĞIR
+        if (typeof show_10793774 === 'function') {
+            show_10793774('pop').then(() => {
+                completeClaim();
+            }).catch(() => {
+                completeClaim(); // Reklam açılmazsa bile ödemeye geç
+            });
+        } else {
+            completeClaim(); // SDK yüklenmediyse direkt geç
+        }
     }
 
     async function completeClaim() {
-        // Formu gizle, başarıyı göster
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('claimBtn').disabled = true;
 
         const email = localStorage.getItem('faucetEmail');
 
@@ -135,8 +77,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
-        } catch (error) {
-            console.log("Bağlantı hatası");
+        } catch (e) {
+            console.log("Hata oluştu.");
         }
 
         startMainTimer(60);
@@ -153,29 +95,18 @@
             
             if (remaining <= 0) {
                 clearInterval(claimInterval);
-                // Başarı ekranını gizle, formu geri getir
                 document.getElementById('successScreen').style.display = 'none';
                 document.getElementById('faucetForm').style.display = 'block';
                 timerDisplay.style.display = 'none';
                 document.getElementById('claimBtn').disabled = false;
+                document.getElementById('claimBtn').innerText = "💰 Ödülü Topla";
             } else {
-                // Sadece form görünürken sayacı göster
                 timerDisplay.style.display = 'block';
             }
         }, 1000);
     }
-
-    // Otomatik reklam ayarı
-    show_10793774({
-        type: 'inApp',
-        inAppSettings: {
-            frequency: 2,
-            capping: 0.1,
-            interval: 30,
-            timeout: 5,
-            everyPage: false
-        }
-    });
 </script>
+
+<p><b>Benzer Konular</b></p><ul id="relatedLinks"></ul>
 </body>
 </html>
