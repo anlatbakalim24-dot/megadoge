@@ -77,69 +77,60 @@ function goToFaucets() {
         }
         localStorage.setItem('faucetEmail', email);
 
-        // REKLAMI ÇAĞIR (SADECE BAŞARILI İZLENMEDE ÖDEME YAPAR)
-        if (typeof show_10793774 === 'function') {
-            // Butonu geçici olarak devre dışı bırak (çift tıklamayı önlemek için)
-            document.getElementById('claimBtn').disabled = true;
-            document.getElementById('claimBtn').innerText = "Reklam Yükleniyor...";
+        // Butonu hemen kilitleyelim (Spam önleme)
+        const claimBtn = document.getElementById('claimBtn');
+        claimBtn.disabled = true;
+        claimBtn.innerText = "🔄 Reklam Yükleniyor...";
 
+        // REWARDED AD ÇAĞRISI
+        if (typeof show_10793774 === 'function') {
+            
+            // Monetag Rewarded Fonksiyonu
             show_10793774().then(() => {
-                // REKLAM BAŞARIYLA İZLENİRSE BURASI ÇALIŞIR
-                completeClaim();
+                // REKLAM BAŞARIYLA İZLENDİ (KAZANÇ BURADA OLUŞUR)
+                console.log("Reklam başarıyla izlendi, ödeme yapılıyor...");
+                completeClaim(); // Ödeme fonksiyonuna git
             }).catch((error) => {
-                // REKLAM İZLENMEZSE VEYA HATA OLUŞURSA ÖDEME YAPMA
+                // Reklam yüklenemedi veya kullanıcı yarıda kapattı
                 console.error("Reklam hatası:", error);
-                alert("Reklam tamamlanamadı. Ödül almak için lütfen reklamı sonuna kadar izleyin.");
+                alert("Ödül almak için reklamı sonuna kadar izlemeniz gerekmektedir.");
                 
-                // Butonu tekrar aktif et ki kullanıcı yeniden deneyebilsin
-                document.getElementById('claimBtn').disabled = false;
-                document.getElementById('claimBtn').innerText = "💰 Ödülü Topla";
+                // Butonu tekrar aktif et
+                claimBtn.disabled = false;
+                claimBtn.innerText = "💰 Ödülü Topla - Collect Reward";
             });
+
         } else {
-            // SDK Yüklenmemişse (Adblock vb.) hata ver ve ödeme yapma
-            alert("Reklam sistemi yüklenemedi. Lütfen reklam engelleyicinizi kapatın.");
+            // SDK Yüklenmemişse yedek olarak Direct Link açabilirsin veya hata verebilirsin
+            alert("Reklam sistemi hazır değil. Lütfen birkaç saniye bekleyip tekrar deneyin.");
+            claimBtn.disabled = false;
+            claimBtn.innerText = "💰 Ödülü Topla";
         }
     }
+
     async function completeClaim() {
+        // Arayüzü değiştir
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
-        document.getElementById('claimBtn').disabled = true;
 
         const email = localStorage.getItem('faucetEmail');
 
+        // WORKER'A ÖDEME EMRİ GÖNDER
         try {
-            await fetch(WORKER_URL, {
+            const response = await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
+            
+            if(response.ok) {
+                console.log("Ödeme başarıyla tetiklendi.");
+            }
         } catch (e) {
-            console.log("Hata oluştu.");
+            console.error("Worker hatası:", e);
         }
 
-        startMainTimer(60);
-    }
-
-    function startMainTimer(seconds) {
-        const timeLeftSpan = document.getElementById('timeLeft');
-        const timerDisplay = document.getElementById('mainWaitTimer');
-        let remaining = seconds;
-
-        const claimInterval = setInterval(() => {
-            remaining--;
-            timeLeftSpan.innerText = remaining;
-            
-            if (remaining <= 0) {
-                clearInterval(claimInterval);
-                document.getElementById('successScreen').style.display = 'none';
-                document.getElementById('faucetForm').style.display = 'block';
-                timerDisplay.style.display = 'none';
-                document.getElementById('claimBtn').disabled = false;
-                document.getElementById('claimBtn').innerText = "💰 Ödülü Topla";
-            } else {
-                timerDisplay.style.display = 'block';
-            }
-        }, 1000);
+        startMainTimer(60); // 60 saniyelik sayacı başlat
     }
 </script>
 
