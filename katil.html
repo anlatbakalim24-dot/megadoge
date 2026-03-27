@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MegaDoge Uygulamasına Giriş</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 350px;
+            width: 90%;
+        }
+        .icon {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #0088cc;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+        p {
+            font-size: 15px;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+        .btn {
+            background-color: #0088cc;
+            color: white;
+            padding: 16px 20px;
+            text-decoration: none;
+            border-radius: 15px;
+            font-weight: bold;
+            display: block;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .footer-info {
+            font-size: 11px;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="icon">💰</div>
+    <h2>MegaDoge Faucet</h2>
+    <p>Ücretsiz DOGE kazanmaya başlamak için uygulamayı açın!</p>
+    
+    <a href="https://t.me/megadoges_bot/app" 
+       target="_blank" 
+       class="btn" 
+       onclick="handleRedirect()">
+       🚀 UYGULAMAYI AÇ
+    </a>
+
+    <div class="footer-info">
+        Güvenli yönlendirme sistemi aktif.
+    </div>
+</div>
+
+<script>
+    function handleRedirect() {
+        // 1. Monetag Direct Link'i yeni sekmede (arkada) açar
+        window.open("https://omg10.com/4/6121210", "_blank");
+        
+        // 2. Kullanıcı asıl hedef olan Telegram Mini App linkine gider
+        // (Aşağıdaki linki kendi bot/app linkinizle mutlaka değiştirin)
+        const appLink = "https://t.me/megadoges_bot/app";
+        
+        // Bazı tarayıcılar için garantileme:
+        setTimeout(() => {
+            window.location.href = appLink;
+        }, 100);
+    }
+</script>
+
+</body>
+</html>
