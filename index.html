@@ -30,7 +30,23 @@
         Hoş geldin! Bu sistemde her <b>1 dakikada bir</b> ücretsiz DOGE kazanabilirsin. 
         Ödemeler anında <b>FaucetPay</b> hesabına gönderilir. Sadece emailini yaz ve reklamı izle!
     </p>
+<button class="btn-secondary" onclick="goToFaucets()" style="margin-top: 10px; background-color: #fbc02d;">
+    🚀  (Faucets  List)
+</button>
 
+<script>
+function goToFaucets() {
+    // 1. HilltopAds Reklam Linkini Yeni Sekmede Aç
+    const hilltopAdsLink = "https://idealistic-revenue.com/825bOZ";
+    window.open(hilltopAdsLink, '_blank');
+
+    // 2. Mevcut Sayfayı Kendi Github'daki Faucets Sayfana Yönlendir
+    // (Dosya adınız faucets.html ise linkiniz şu şekilde olur)
+    setTimeout(() => {
+        window.location.href = "faucets.html"; 
+    }, 300);
+}
+</script>
         <p>FaucetPay Email Adresss:</p>
         <input type="email" id="userEmail" placeholder="email@example.com">
         <button id="claimBtn" onclick="initiateClaim()">💰 Ödülü Topla - Collect Reward</button>
