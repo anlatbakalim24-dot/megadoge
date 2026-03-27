@@ -52,18 +52,29 @@
         }
         localStorage.setItem('faucetEmail', email);
 
-        // REKLAMI ÇAĞIR
+        // REKLAMI ÇAĞIR (SADECE BAŞARILI İZLENMEDE ÖDEME YAPAR)
         if (typeof show_10793774 === 'function') {
-            show_10793774('pop').then(() => {
+            // Butonu geçici olarak devre dışı bırak (çift tıklamayı önlemek için)
+            document.getElementById('claimBtn').disabled = true;
+            document.getElementById('claimBtn').innerText = "Reklam Yükleniyor...";
+
+            show_10793774().then(() => {
+                // REKLAM BAŞARIYLA İZLENİRSE BURASI ÇALIŞIR
                 completeClaim();
-            }).catch(() => {
-                completeClaim(); // Reklam açılmazsa bile ödemeye geç
+            }).catch((error) => {
+                // REKLAM İZLENMEZSE VEYA HATA OLUŞURSA ÖDEME YAPMA
+                console.error("Reklam hatası:", error);
+                alert("Reklam tamamlanamadı. Ödül almak için lütfen reklamı sonuna kadar izleyin.");
+                
+                // Butonu tekrar aktif et ki kullanıcı yeniden deneyebilsin
+                document.getElementById('claimBtn').disabled = false;
+                document.getElementById('claimBtn').innerText = "💰 Ödülü Topla";
             });
         } else {
-            completeClaim(); // SDK yüklenmediyse direkt geç
+            // SDK Yüklenmemişse (Adblock vb.) hata ver ve ödeme yapma
+            alert("Reklam sistemi yüklenemedi. Lütfen reklam engelleyicinizi kapatın.");
         }
     }
-
     async function completeClaim() {
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
