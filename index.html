@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Faucet Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-button-color: #0088cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-hint-color: #999999;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            color: #333;
+        }
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .faucet-name { color: var(--tg-theme-button-color); margin-bottom: 5px; font-size: 24px; font-weight: bold; }
+        .crypto-badge {
+            background: #fff9c4;
+            color: #fbc02d;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .user-welcome { font-size: 16px; margin-bottom: 20px; color: #555; }
+        .description { font-size: 14px; color: var(--tg-theme-hint-color); margin-bottom: 25px; line-height: 1.5; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: var(--tg-theme-button-color); }
+        
+        #claimBtn {
+            background-color: var(--tg-theme-button-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        #claimBtn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .timer-box {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #e53935;
+            display: none;
+        }
+
+        /* Reklam Katmanı */
+        #adOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            z-index: 10000;
+        }
+        #adHeader {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #closeAdBtn {
+            background: #e53935;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            display: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="faucet-name">MegaDoge Faucet</div>
+    <div class="crypto-badge">Ödeme Birimi: DOGE Coin</div>
+    
+    <div class="user-welcome">Merhaba, <span id="tgUser">Kullanıcı</span>! 👋</div>
+    
+    <p class="description">
+        Hoş geldin! Bu sistemde her <b>1 dakikada bir</b> ücretsiz DOGE kazanabilirsin. 
+        Ödemeler anında <b>FaucetPay</b> hesabına gönderilir. Sadece emailini yaz ve reklamı izle!
+    </p>
+
+    <input type="email" id="userEmail" placeholder="FaucetPay Email Adresiniz">
+    
+    <button id="claimBtn" onclick="initiateClaim()">💰 Ödülü Topla</button>
+    
+    <div id="mainWaitTimer" class="timer-box">
+        Yeni hak için bekle: <span id="timeLeft">60</span> saniye
+    </div>
+</div>
+
+<div id="adOverlay">
+    <div id="adHeader">
+        <div>Reklam bitimine: <span id="adTimer">15</span>s</div>
+        <div id="closeAdBtn" onclick="completeClaim()">REKLAMI KAPAT [X]</div>
+    </div>
+    <iframe src="https://internetdefteri.blogspot.com/" width="100%" height="90%" style="border:none;"></iframe>
+</div>
+
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand(); // Uygulamayı tam ekran yap
+    
+    // Kullanıcı adını Telegram'dan al
+    document.getElementById('tgUser').innerText = tg.initDataUnsafe.user?.first_name || "Ziyaretçi";
+    
+    // Daha önce girilen email varsa hatırla
+    const savedEmail = localStorage.getItem('faucetEmail');
+    if(savedEmail) document.getElementById('userEmail').value = savedEmail;
+
+    let claimInterval;
+    const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/"; // 1. Adımda oluşturduğunuz URL
+
+    // 1. İşlem: Hak Talebini Başlat (Reklamı Göster)
+    function initiateClaim() {
+        const email = document.getElementById('userEmail').value;
+        if (!email.includes("@")) {
+            alert("Lütfen geçerli bir FaucetPay email adresi girin.");
+            return;
+        }
+        localStorage.setItem('faucetEmail', email);
+
+        // Reklam ekranını aç
+        document.getElementById('adOverlay').style.display = 'block';
+        let adSeconds = 15;
+        
+        let adCountdown = setInterval(() => {
+            adSeconds--;
+            document.getElementById('adTimer').innerText = adSeconds;
+            if (adSeconds <= 0) {
+                clearInterval(adCountdown);
+                document.getElementById('closeAdBtn').style.display = 'block';
+            }
+        }, 1000);
+    }
+
+    // 2. İşlem: Reklam Kapandıktan Sonra Ödemeyi Yap
+    async function completeClaim() {
+        document.getElementById('adOverlay').style.display = 'none';
+        document.getElementById('closeAdBtn').style.display = 'none';
+        document.getElementById('adTimer').innerText = "15"; // Reset
+
+        const email = localStorage.getItem('faucetEmail');
+        
+        // Düğmeyi devre dışı bırak
+        const btn = document.getElementById('claimBtn');
+        btn.disabled = true;
+
+        try {
+            // Cloudflare Worker'a istek gönder
+            const response = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            });
+            
+            const result = await response.json();
+            
+            if(result.status === 200) {
+                alert("Başarılı! Ödemeniz FaucetPay hesabınıza gönderildi.");
+            } else {
+                alert("İşlem sıraya alındı veya bir hata oluştu.");
+            }
+        } catch (error) {
+            alert("Ödeme sunucusuna bağlanılamadı.");
+        }
+
+        startMainTimer(60); // 60 saniyelik geri sayımı başlat
+    }
+
+    // 3. İşlem: Ana Ekran Geri Sayım Sayacı
+    function startMainTimer(seconds) {
+        const timerDisplay = document.getElementById('mainWaitTimer');
+        const timeLeftSpan = document.getElementById('timeLeft');
+        const btn = document.getElementById('claimBtn');
+
+        timerDisplay.style.display = 'block';
+        let remaining = seconds;
+
+        claimInterval = setInterval(() => {
+            remaining--;
+            timeLeftSpan.innerText = remaining;
+            
+            if (remaining <= 0) {
+                clearInterval(claimInterval);
+                timerDisplay.style.display = 'none';
+                btn.disabled = false;
+                btn.innerText = "💰 Ödülü Topla";
+            }
+        }, 1000);
+    }
+</script>
+
+</body>
+</html>
