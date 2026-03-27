@@ -62,12 +62,26 @@ function goToFaucets() {
 
 <script>
     let tg = window.Telegram.WebApp;
+    tg.ready(); // Kılavuzun önerdiği Telegram SDK aktivasyonu
     tg.expand();
 
-    const savedEmail = localStorage.getItem('faucetEmail');
-    if(savedEmail) document.getElementById('userEmail').value = savedEmail;
-
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
+    const ZONE_ID = "10793774"; // Ana bölge kimliğin
+    let isAdReady = false;
+
+    // --- REKLAMI ÖN YÜKLE (Preload) ---
+    // Sayfa açılır açılmaz reklamı arka planda hazırlar, böylece tıklandığında anında açılır.
+    function preloadAd() {
+        if (typeof show_10793774 === 'function') {
+            show_10793774({ type: 'preload', ymid: tg.initDataUnsafe?.user?.id || 'guest' })
+                .then(() => {
+                    isAdReady = true;
+                    console.log("Reklam ön yüklendi ve hazır.");
+                })
+                .catch(() => console.log("Ön yükleme başarısız."));
+        }
+    }
+    preloadAd();
 
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
@@ -77,60 +91,73 @@ function goToFaucets() {
         }
         localStorage.setItem('faucetEmail', email);
 
-        // Butonu hemen kilitleyelim (Spam önleme)
         const claimBtn = document.getElementById('claimBtn');
         claimBtn.disabled = true;
-        claimBtn.innerText = "🔄 Reklam Yükleniyor...";
+        claimBtn.innerText = "🔄 Reklam Gösteriliyor...";
 
-        // REWARDED AD ÇAĞRISI
+        // --- REKLAMI GÖSTER ---
         if (typeof show_10793774 === 'function') {
-            
-            // Monetag Rewarded Fonksiyonu
-            show_10793774().then(() => {
-                // REKLAM BAŞARIYLA İZLENDİ (KAZANÇ BURADA OLUŞUR)
-                console.log("Reklam başarıyla izlendi, ödeme yapılıyor...");
-                completeClaim(); // Ödeme fonksiyonuna git
-            }).catch((error) => {
-                // Reklam yüklenemedi veya kullanıcı yarıda kapattı
-                console.error("Reklam hatası:", error);
-                alert("Ödül almak için reklamı sonuna kadar izlemeniz gerekmektedir.");
-                
-                // Butonu tekrar aktif et
-                claimBtn.disabled = false;
-                claimBtn.innerText = "💰 Ödülü Topla - Collect Reward";
-            });
-
+            // ymid olarak Telegram User ID gönderiyoruz (Postback için kritik)
+            show_10793774({ ymid: tg.initDataUnsafe?.user?.id || 'guest' })
+                .then(() => {
+                    // KULLANICI REKLAMI İZLEDİ
+                    console.log('User watched the ad');
+                    completeClaim();
+                    isAdReady = false; 
+                    preloadAd(); // Bir sonraki dakika için şimdiden hazırla
+                })
+                .catch(() => {
+                    // REKLAM BAŞARISIZ VEYA ATLANDI
+                    console.log('Ad failed or was skipped');
+                    alert("Ödül kazanmak için reklamı sonuna kadar izlemelisiniz.");
+                    claimBtn.disabled = false;
+                    claimBtn.innerText = "💰 Ödülü Topla";
+                });
         } else {
-            // SDK Yüklenmemişse yedek olarak Direct Link açabilirsin veya hata verebilirsin
-            alert("Reklam sistemi hazır değil. Lütfen birkaç saniye bekleyip tekrar deneyin.");
+            alert("Reklam SDK yüklenemedi. Lütfen bekleyin.");
             claimBtn.disabled = false;
-            claimBtn.innerText = "💰 Ödülü Topla";
         }
     }
 
     async function completeClaim() {
-        // Arayüzü değiştir
+        // Ekranları değiştir
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('mainWaitTimer').style.display = 'block';
 
         const email = localStorage.getItem('faucetEmail');
 
-        // WORKER'A ÖDEME EMRİ GÖNDER
         try {
-            const response = await fetch(WORKER_URL, {
+            await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
-            
-            if(response.ok) {
-                console.log("Ödeme başarıyla tetiklendi.");
-            }
-        } catch (e) {
-            console.error("Worker hatası:", e);
-        }
+        } catch (e) { console.error("Ödeme hatası:", e); }
 
-        startMainTimer(60); // 60 saniyelik sayacı başlat
+        startMainTimer(60);
+    }
+
+    function startMainTimer(seconds) {
+        let remaining = seconds;
+        const timeLeftSpan = document.getElementById('timeLeft');
+        
+        const claimInterval = setInterval(() => {
+            remaining--;
+            timeLeftSpan.innerText = remaining;
+            
+            if (remaining <= 0) {
+                clearInterval(claimInterval);
+                // SIFIRLAMA: Formu geri getir, başarı ekranını kapat
+                document.getElementById('successScreen').style.display = 'none';
+                document.getElementById('faucetForm').style.display = 'block';
+                document.getElementById('mainWaitTimer').style.display = 'none';
+                
+                const btn = document.getElementById('claimBtn');
+                btn.disabled = false;
+                btn.innerText = "💰 Ödülü Topla - Collect Reward";
+            }
+        }, 1000);
     }
 </script>
 
