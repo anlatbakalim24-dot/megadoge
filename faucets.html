@@ -39,7 +39,24 @@
 <body>
 <div class="faucet-card">
   <div class="faucet-info">  <a href="https://anlatbakalim24-dot.github.io/megadoge/" class="go-btn">⬅ Return to Home Page</a>
-     </div> </div>
+    <button class="btn-secondary" onclick="goToFaucets()" style="margin-top: 10px; background-color: #fbc02d;">
+    🚀  (Mega Doge Home)
+</button>
+
+<script>
+function goToFaucets() {
+    // 1. HilltopAds Reklam Linkini Yeni Sekmede Aç
+    const hilltopAdsLink = "https://omg10.com/4/10795762";
+    window.open(hilltopAdsLink, '_blank');
+
+    // 2. Mevcut Sayfayı Kendi Github'daki Faucets Sayfana Yönlendir
+    // (Dosya adınız index.html ise linkiniz şu şekilde olur)
+    setTimeout(() => {
+        window.location.href = "index.html"; 
+    }, 300);
+}
+</script>
+  </div> </div>
     <h2>💰Elite Faucets</h2>
     <p>Visit the following sites to earn more!</p>
 
