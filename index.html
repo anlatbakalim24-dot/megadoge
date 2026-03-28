@@ -62,27 +62,26 @@ function goToFaucets() {
 
 <script>
     let tg = window.Telegram.WebApp;
-    tg.ready(); // Kılavuzun önerdiği Telegram SDK aktivasyonu
+    tg.ready(); 
     tg.expand();
 
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
-    const ZONE_ID = "10793774"; // Ana bölge kimliğin
-    let isAdReady = false;
-
-    // --- REKLAMI ÖN YÜKLE (Preload) ---
-    // Sayfa açılır açılmaz reklamı arka planda hazırlar, böylece tıklandığında anında açılır.
+    const ZONE_ID = "10793774"; 
+    
+    // --- 1. REKLAMI ÖN YÜKLEME (Preload) ---
     function preloadAd() {
         if (typeof show_10793774 === 'function') {
+            // ymid eklemek, her reklamı bir kullanıcıyla eşleştirir (Kazanç için kritik!)
             show_10793774({ type: 'preload', ymid: tg.initDataUnsafe?.user?.id || 'guest' })
-                .then(() => {
-                    isAdReady = true;
-                    console.log("Reklam ön yüklendi ve hazır.");
-                })
-                .catch(() => console.log("Ön yükleme başarısız."));
+                .then(() => console.log("Reklam ön yüklendi."))
+                .catch(() => console.log("Ön yükleme şu an yapılamıyor."));
         }
     }
-    preloadAd();
+    
+    // SDK'nın yüklendiğinden emin olmak için kısa bir gecikmeyle preload yapıyoruz
+    setTimeout(preloadAd, 2000);
 
+    // --- 2. BUTONA TIKLANDIĞINDA ÇALIŞAN FONKSİYON ---
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
         if (!email.includes("@")) {
@@ -93,48 +92,55 @@ function goToFaucets() {
 
         const claimBtn = document.getElementById('claimBtn');
         claimBtn.disabled = true;
-        claimBtn.innerText = "🔄 Reklam Gösteriliyor...";
+        claimBtn.innerText = "🔄 Reklam Açılıyor...";
 
-        // --- REKLAMI GÖSTER ---
+        // --- 3. REKLAMI GÖSTER VE SONUCU BEKLE ---
         if (typeof show_10793774 === 'function') {
-            // ymid olarak Telegram User ID gönderiyoruz (Postback için kritik)
+            // Monetag Kılavuzu: show_XXX() her zaman .then() ve .catch() ile kullanılmalı
             show_10793774({ ymid: tg.initDataUnsafe?.user?.id || 'guest' })
                 .then(() => {
-                    // KULLANICI REKLAMI İZLEDİ
-                    console.log('User watched the ad');
-                    completeClaim();
-                    isAdReady = false; 
-                    preloadAd(); // Bir sonraki dakika için şimdiden hazırla
+                    // KULLANICI REKLAMI SONUNA KADAR İZLEDİ ✅
+                    console.log('Reklam başarıyla izlendi.');
+                    completeClaim(); // Ödeme ve Sayaç aşamasına geç
+                    preloadAd();     // Bir sonraki dakika için hazırlık yap
                 })
                 .catch(() => {
-                    // REKLAM BAŞARISIZ VEYA ATLANDI
-                    console.log('Ad failed or was skipped');
-                    alert("Ödül kazanmak için reklamı sonuna kadar izlemelisiniz.");
+                    // REKLAM KAPATILDI VEYA HATA OLUŞTU ❌
+                    alert("Ödül kazanmak için reklamı sonuna kadar izlemelisiniz!");
                     claimBtn.disabled = false;
                     claimBtn.innerText = "💰 Ödülü Topla";
                 });
         } else {
-            alert("Reklam SDK yüklenemedi. Lütfen bekleyin.");
+            alert("Reklam henüz hazır değil, lütfen 2 saniye bekleyip tekrar deneyin.");
             claimBtn.disabled = false;
+            claimBtn.innerText = "💰 Ödülü Topla";
+            preloadAd();
         }
     }
 
     async function completeClaim() {
-        // Ekranları değiştir
+        // EKRANLARI DEĞİŞTİR
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
-        document.getElementById('mainWaitTimer').style.display = 'block';
+        
+        // Önemli: Sayacın görünür olduğundan emin olalım
+        const timerBox = document.getElementById('mainWaitTimer');
+        if(timerBox) timerBox.style.display = 'block';
 
         const email = localStorage.getItem('faucetEmail');
 
+        // WORKER'A ÖDEME EMRİ GÖNDER
         try {
             await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
-        } catch (e) { console.error("Ödeme hatası:", e); }
+        } catch (e) {
+            console.error("Ödeme hatası:", e);
+        }
 
+        // 60 SANİYELİK SAYACI BAŞLAT
         startMainTimer(60);
     }
 
@@ -144,14 +150,17 @@ function goToFaucets() {
         
         const claimInterval = setInterval(() => {
             remaining--;
-            timeLeftSpan.innerText = remaining;
+            if(timeLeftSpan) timeLeftSpan.innerText = remaining;
             
             if (remaining <= 0) {
                 clearInterval(claimInterval);
-                // SIFIRLAMA: Formu geri getir, başarı ekranını kapat
+                
+                // --- SIFIRLAMA VE ANA EKRANA DÖNÜŞ ---
                 document.getElementById('successScreen').style.display = 'none';
                 document.getElementById('faucetForm').style.display = 'block';
-                document.getElementById('mainWaitTimer').style.display = 'none';
+                
+                const timerBox = document.getElementById('mainWaitTimer');
+                if(timerBox) timerBox.style.display = 'none';
                 
                 const btn = document.getElementById('claimBtn');
                 btn.disabled = false;
