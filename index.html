@@ -45,7 +45,31 @@
         <button onclick="goToFaucets()" style="margin-bottom: 15px; background-color: #fbc02d; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">
             🚀 (Faucets List)
         </button>
+<script>
 
+function goToFaucets() {
+
+    // 1. monetagAds Reklam Linkini Yeni Sekmede Aç
+
+    const monetagAdsLink = "https://omg10.com/4/10795763";
+
+    window.open(monetagAdsLink, '_blank');
+
+
+
+    // 2. Mevcut Sayfayı Kendi Github'daki Faucets Sayfana Yönlendir
+
+    // (Dosya adınız faucets.html ise linkiniz şu şekilde olur)
+
+    setTimeout(() => {
+
+        window.location.href = "faucets.html"; 
+
+    }, 300);
+
+}
+
+</script>
         <p style="font-size:13px; font-weight:bold;">FaucetPay Email Address:</p>
         <input type="email" id="userEmail" placeholder="email@example.com">
         <button id="claimBtn" onclick="initiateClaim()">💰 Ödülü Topla - Collect Reward</button>
