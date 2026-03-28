@@ -68,17 +68,24 @@ function goToFaucets() {
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
     const ZONE_ID = "10793774"; 
     
+    // --- 0. KULLANICIYI İSMİYLE KARŞILAMA ---
+    // HTML kısmında id="userGreeting" olan bir element eklediysen oraya ismi yazar.
+    const user = tg.initDataUnsafe?.user;
+    const greetingMsg = user?.first_name ? `Hello, ${user.first_name}! 👋` : "Hello, Guest! 👋";
+    
+    // Eğer HTML'de bir yer ayırmadıysan, ismi konsola ve ymid'ye gönderiyoruz.
+    const userId = user?.id ? String(user.id) : "guest_" + Math.floor(Math.random() * 1000000);
+
     // --- 1. REKLAMI ÖN YÜKLEME (Preload) ---
     function preloadAd() {
         if (typeof show_10793774 === 'function') {
-            // ymid eklemek, her reklamı bir kullanıcıyla eşleştirir (Kazanç için kritik!)
-            show_10793774({ type: 'preload', ymid: tg.initDataUnsafe?.user?.id || 'guest' })
-                .then(() => console.log("Reklam ön yüklendi."))
+            // ymid olarak Telegram ID'sini string olarak gönderiyoruz (CPM için kritik)
+            show_10793774({ type: 'preload', ymid: userId })
+                .then(() => console.log("Reklam ön yüklendi. Kullanıcı ID:", userId))
                 .catch(() => console.log("Ön yükleme şu an yapılamıyor."));
         }
     }
     
-    // SDK'nın yüklendiğinden emin olmak için kısa bir gecikmeyle preload yapıyoruz
     setTimeout(preloadAd, 2000);
 
     // --- 2. BUTONA TIKLANDIĞINDA ÇALIŞAN FONKSİYON ---
@@ -96,22 +103,23 @@ function goToFaucets() {
 
         // --- 3. REKLAMI GÖSTER VE SONUCU BEKLE ---
         if (typeof show_10793774 === 'function') {
-            // Monetag Kılavuzu: show_XXX() her zaman .then() ve .catch() ile kullanılmalı
-            show_10793774({ ymid: tg.initDataUnsafe?.user?.id || 'guest' })
+            // Monetag Kılavuzu: ymid parametresi gerçek kullanıcıyı doğrular
+            show_10793774({ ymid: userId })
                 .then(() => {
                     // KULLANICI REKLAMI SONUNA KADAR İZLEDİ ✅
-                    console.log('Reklam başarıyla izlendi.');
-                    completeClaim(); // Ödeme ve Sayaç aşamasına geç
-                    preloadAd();     // Bir sonraki dakika için hazırlık yap
+                    console.log('Reklam başarıyla izlendi. ID:', userId);
+                    completeClaim(); 
+                    preloadAd();     
                 })
-                .catch(() => {
+                .catch((err) => {
                     // REKLAM KAPATILDI VEYA HATA OLUŞTU ❌
+                    console.error("Reklam hatası:", err);
                     alert("Ödül kazanmak için reklamı sonuna kadar izlemelisiniz!");
                     claimBtn.disabled = false;
                     claimBtn.innerText = "💰 Ödülü Topla";
                 });
         } else {
-            alert("Reklam henüz hazır değil, lütfen 2 saniye bekleyip tekrar deneyin.");
+            alert("Reklam henüz hazır değil, lütfen birkaç saniye bekleyin.");
             claimBtn.disabled = false;
             claimBtn.innerText = "💰 Ödülü Topla";
             preloadAd();
@@ -119,17 +127,14 @@ function goToFaucets() {
     }
 
     async function completeClaim() {
-        // EKRANLARI DEĞİŞTİR
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
         
-        // Önemli: Sayacın görünür olduğundan emin olalım
         const timerBox = document.getElementById('mainWaitTimer');
         if(timerBox) timerBox.style.display = 'block';
 
         const email = localStorage.getItem('faucetEmail');
 
-        // WORKER'A ÖDEME EMRİ GÖNDER
         try {
             await fetch(WORKER_URL, {
                 method: 'POST',
@@ -140,7 +145,6 @@ function goToFaucets() {
             console.error("Ödeme hatası:", e);
         }
 
-        // 60 SANİYELİK SAYACI BAŞLAT
         startMainTimer(60);
     }
 
@@ -155,7 +159,6 @@ function goToFaucets() {
             if (remaining <= 0) {
                 clearInterval(claimInterval);
                 
-                // --- SIFIRLAMA VE ANA EKRANA DÖNÜŞ ---
                 document.getElementById('successScreen').style.display = 'none';
                 document.getElementById('faucetForm').style.display = 'block';
                 
@@ -168,8 +171,13 @@ function goToFaucets() {
             }
         }, 1000);
     }
-</script>
 
+    // Uygulama ilk açıldığında isimi ekrana yazdır (Eğer HTML'de div varsa)
+    window.onload = function() {
+        const greetDiv = document.getElementById('userGreeting');
+        if(greetDiv) greetDiv.innerText = greetingMsg;
+    };
+</script>
 
 </body>
 </html>
