@@ -121,8 +121,17 @@ function goToFaucets() {
 
     // Ödeme ve Sayaç Fonksiyonları (Eskisi gibi kalabilir)
     async function completeClaim() {
-        document.getElementById('faucetForm').style.display = 'none';
-        document.getElementById('successScreen').style.display = 'block';
+        // 1. Formu gizle, Başarı ekranını ve Sayacı göster
+    document.getElementById('faucetForm').style.display = 'none';
+    const successScreen = document.getElementById('successScreen');
+    const timerBox = document.getElementById('mainWaitTimer');
+    
+    if(successScreen) successScreen.style.display = 'block';
+    if(timerBox) timerBox.style.display = 'block';
+
+    const email = localStorage.getItem('faucetEmail');
+
+    // 2. Ödeme isteğini gönder
         try {
             await fetch(WORKER_URL, {
                 method: 'POST',
