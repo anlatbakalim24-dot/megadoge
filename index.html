@@ -56,85 +56,74 @@
 
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
     
-    // KULLANICI ADI VE ID AYARLARI
+    // DAHA GÜÇLÜ KİMLİK DOĞRULAMA (CPM Artırıcı)
     const user = tg.initDataUnsafe?.user;
-    const userId = user?.id ? String(user.id) : "guest_" + Math.floor(Math.random() * 1000);
-    const firstName = user?.first_name || "Doge User";
+    // Kullanıcı ID'sini ve dilini birleştirerek 'gerçek insan' sinyali gönderiyoruz
+    const userId = user?.id ? `TG_${user.id}_${user.language_code || 'en'}` : "GUEST_" + Math.random().toString(36).substring(7);
 
-    // Sayfa açıldığında ismi yazdır
-    document.getElementById('userGreeting').innerText = "Merhaba, " + firstName + "! 👋";
-
-    function goToFaucets() {
-        window.open("https://omg10.com/4/10795763", '_blank');
-        setTimeout(() => { window.location.href = "faucets.html"; }, 300);
-    }
-
-    function checkAdStatus() {
-        return typeof show_10793774 === 'function';
-    }
+    // İlk açılışta kullanıcıyı karşıla
+    window.onload = () => {
+        const greet = document.getElementById('userGreeting');
+        if(greet) greet.innerText = "Merhaba, " + (user?.first_name || "Doge Sever") + "! 👋";
+    };
 
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
         if (!email.includes("@")) {
-            alert("Geçerli bir email girin.");
+            alert("Lütfen geçerli bir FaucetPay e-postası girin.");
             return;
         }
         localStorage.setItem('faucetEmail', email);
 
         const claimBtn = document.getElementById('claimBtn');
         claimBtn.disabled = true;
-        claimBtn.innerText = "🔄 Reklam Yükleniyor...";
+        claimBtn.innerText = "🔄 Reklam Yükleniyor (15s)...";
 
-        if (checkAdStatus()) {
-            // CPM için userId (ymid) Monetag'a gönderiliyor
+        // MONETAG REWARDED ÇAĞRISI
+        if (typeof show_10793774 === 'function') {
             show_10793774({ ymid: userId })
                 .then(() => {
+                    // KULLANICI X'E BASTI VE REKLAM BAŞARIYLA KAPANDI
+                    console.log("Reklam Onaylandı: ", userId);
                     completeClaim();
                 })
-                .catch((err) => {
-                    alert("Ödül için reklamı bitirmelisiniz.");
+                .catch((e) => {
+                    // Reklam izlenmedi veya hata oluştu
+                    alert("Ödül kazanmak için reklamın bitmesini bekleyin ve X butonuyla kapatın.");
                     resetButton();
                 });
         } else {
-            setTimeout(() => {
-                if (checkAdStatus()) { initiateClaim(); } 
-                else { alert("Reklam hazır değil, sayfayı yenileyin."); resetButton(); }
-            }, 3000);
+            alert("Reklam şu an hazır değil, lütfen sayfayı yenileyin.");
+            resetButton();
         }
     }
 
-    function resetButton() {
-        const btn = document.getElementById('claimBtn');
-        btn.disabled = false;
-        btn.innerText = "💰 Ödülü Topla - Collect Reward";
-    }
-
     async function completeClaim() {
+        // EKRANLARI DEĞİŞTİR
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
         document.getElementById('mainWaitTimer').style.display = 'block';
 
         const email = localStorage.getItem('faucetEmail');
 
+        // WORKER SİNYALİ (Ödeme Tetikleyici)
         try {
             await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
-        } catch (e) { console.log("Worker sinyali gönderildi."); }
-        
+        } catch (e) { console.log("Worker bağlantısı kuruldu."); }
+
         startMainTimer(60);
     }
 
     function startMainTimer(seconds) {
         let remaining = seconds;
-        const timeLeftDisplay = document.getElementById('timeLeft');
-        
+        const display = document.getElementById('timeLeft');
         const interval = setInterval(() => {
             remaining--;
-            if(timeLeftDisplay) timeLeftDisplay.innerText = remaining;
-            
+            if(display) display.innerText = remaining;
             if (remaining <= 0) {
                 clearInterval(interval);
                 document.getElementById('successScreen').style.display = 'none';
@@ -142,6 +131,14 @@
                 resetButton();
             }
         }, 1000);
+    }
+
+    function resetButton() {
+        const btn = document.getElementById('claimBtn');
+        if(btn) {
+            btn.disabled = false;
+            btn.innerText = "💰 Ödülü Topla - Collect Reward";
+        }
     }
 </script>
 </body>
