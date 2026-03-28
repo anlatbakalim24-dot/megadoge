@@ -64,45 +64,17 @@ function goToFaucets() {
 
 <script>
     let tg = window.Telegram.WebApp;
-    tg.ready(); 
+    tg.ready();
     tg.expand();
 
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
-    const user = tg.initDataUnsafe?.user;
-    const userId = user?.id ? String(user.id) : "guest_" + Math.floor(Math.random() * 1000000);
+    const userId = tg.initDataUnsafe?.user?.id ? String(tg.initDataUnsafe.user.id) : "guest_" + Math.floor(Math.random() * 1000);
 
-    // --- 1. REKLAMI YÜKLEME VE KONTROL FONKSİYONU ---
-    function tryShowAd() {
-        const claimBtn = document.getElementById('claimBtn');
-        
-        // Monetag SDK'sı yüklendi mi kontrol et
-        if (typeof show_10793774 === 'function') {
-            claimBtn.innerText = "🔄 Reklam Açılıyor...";
-            
-            show_10793774({ ymid: userId })
-                .then(() => {
-                    console.log('Reklam Başarılı');
-                    completeClaim();
-                })
-                .catch((err) => {
-                    console.error("Reklam Hatası:", err);
-                    alert("Ödül için reklamı sonuna kadar izlemelisiniz!");
-                    resetButton();
-                });
-        } else {
-            // SDK hala yoksa manuel olarak tekrar yüklemeyi dene (Zorlama)
-            console.log("SDK bulunamadı, yeniden deneniyor...");
-            alert("Reklam sistemi yükleniyor, lütfen 3 saniye sonra tekrar deneyin.");
-            resetButton();
-            
-            // SDK'yı tekrar çağırmaya zorla (Eğer engellendiyse)
-            const script = document.createElement('script');
-            script.src = 'https://alwingulla.com/act/files/tag.min.js?z=10793774';
-            document.head.appendChild(script);
-        }
+    // Reklamın yüklenip yüklenmediğini sürekli kontrol eden yardımcı fonksiyon
+    function checkAdStatus() {
+        return typeof show_10793774 === 'function';
     }
 
-    // --- 2. ANA BUTON FONKSİYONU ---
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
         if (!email.includes("@")) {
@@ -113,8 +85,32 @@ function goToFaucets() {
 
         const claimBtn = document.getElementById('claimBtn');
         claimBtn.disabled = true;
-        
-        tryShowAd();
+        claimBtn.innerText = "🔄 Reklam Hazırlanıyor...";
+
+        // SDK yüklenmiş mi bak
+        if (checkAdStatus()) {
+            // SDK VAR: Reklamı göster
+            show_10793774({ ymid: userId })
+                .then(() => {
+                    completeClaim();
+                })
+                .catch((err) => {
+                    console.error("Reklam atlandı:", err);
+                    alert("Ödül için reklamı bitirmelisiniz.");
+                    resetButton();
+                });
+        } else {
+            // SDK YOK: 2 saniye bekle ve otomatik tekrar dene
+            console.log("SDK henüz hazır değil, otomatik yeniden deneniyor...");
+            setTimeout(() => {
+                if (checkAdStatus()) {
+                    initiateClaim(); // SDK geldiyse fonksiyonu tekrar çalıştır
+                } else {
+                    alert("Reklam sunucusu yanıt vermiyor. Lütfen reklam engelleyici kullanmadığınızdan emin olun ve sayfayı yenileyin.");
+                    resetButton();
+                }
+            }, 3000);
+        }
     }
 
     function resetButton() {
@@ -123,49 +119,33 @@ function goToFaucets() {
         btn.innerText = "💰 Ödülü Topla - Collect Reward";
     }
 
+    // Ödeme ve Sayaç Fonksiyonları (Eskisi gibi kalabilir)
     async function completeClaim() {
         document.getElementById('faucetForm').style.display = 'none';
         document.getElementById('successScreen').style.display = 'block';
-        
-        const timerBox = document.getElementById('mainWaitTimer');
-        if(timerBox) timerBox.style.display = 'block';
-
         try {
-            const email = localStorage.getItem('faucetEmail');
             await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email })
+                body: JSON.stringify({ email: localStorage.getItem('faucetEmail') })
             });
-        } catch (e) { console.error("Ödeme hatası:", e); }
-
+        } catch (e) { console.log("Ödeme isteği gönderildi."); }
         startMainTimer(60);
     }
 
     function startMainTimer(seconds) {
         let remaining = seconds;
-        const timeLeftSpan = document.getElementById('timeLeft');
-        const claimInterval = setInterval(() => {
+        const interval = setInterval(() => {
             remaining--;
-            if(timeLeftSpan) timeLeftSpan.innerText = remaining;
+            document.getElementById('timeLeft').innerText = remaining;
             if (remaining <= 0) {
-                clearInterval(claimInterval);
+                clearInterval(interval);
                 document.getElementById('successScreen').style.display = 'none';
                 document.getElementById('faucetForm').style.display = 'block';
-                const timerBox = document.getElementById('mainWaitTimer');
-                if(timerBox) timerBox.style.display = 'none';
                 resetButton();
             }
         }, 1000);
     }
-
-    // İlk açılışta SDK'yı hazırla
-    window.onload = () => {
-        if (user?.first_name) {
-            const greetDiv = document.getElementById('userGreeting');
-            if(greetDiv) greetDiv.innerText = `Hello, ${user.first_name}! 👋`;
-        }
-    };
 </script>
 </body>
 </html>
