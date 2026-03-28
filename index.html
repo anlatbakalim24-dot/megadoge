@@ -11,12 +11,14 @@
         :root { --tg-theme-button-color: #0088cc; }
         body { font-family: sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { background: white; width: 100%; max-width: 400px; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        .faucet-name { color: var(--tg-theme-button-color); font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        .faucet-name { color: var(--tg-theme-button-color); font-size: 24px; font-weight: bold; margin-bottom: 10px; }
         input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; }
-        #claimBtn { background-color: var(--tg-theme-button-color); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        #claimBtn { background-color: var(--tg-theme-button-color); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         #claimBtn:disabled { background-color: #ccc; }
-        .timer-box { margin-top: 15px; font-weight: bold; color: #e53935; display: none; }
+        .timer-box { margin-top: 15px; font-weight: bold; color: #e53935; display: none; font-size: 18px; }
         #successScreen { display: none; padding: 20px; }
+        .description { font-size: 14px; color: #666; line-height: 1.4; }
+        #userGreeting { color: #0088cc; font-size: 18px; margin-bottom: 15px; height: 22px; }
     </style>
 </head>
 <body>
@@ -24,41 +26,26 @@
 <div class="container">
     <div id="faucetForm">
         <div class="faucet-name">MegaDoge Faucet</div>
-        <p id="userGreeting" style="font-weight: bold; color: #333;"></p>
-       <p class="description">
-        Welcome! With this system, you can earn free DOGE <b>every minute</b>.
-        Payments are sent instantly to your<b> FaucetPay</b> account. Just enter your email and watch the ad!
-       </p>  <p class="description">
-        Hoş geldin! Bu sistemde her <b>1 dakikada bir</b> ücretsiz DOGE kazanabilirsin. 
-        Ödemeler anında <b>FaucetPay</b> hesabına gönderilir. Sadece emailini yaz ve reklamı izle!
-    </p>
-<button class="btn-secondary" onclick="goToFaucets()" style="margin-top: 10px; background-color: #fbc02d;">
-    🚀  (Faucets  List)
-</button>
+        
+        <div id="userGreeting"></div>
 
-<script>
-function goToFaucets() {
-    // 1. monetagAds Reklam Linkini Yeni Sekmede Aç
-    const monetagAdsLink = "https://omg10.com/4/10795763";
-    window.open(monetagAdsLink, '_blank');
+        <p class="description">
+            Welcome! Earn free DOGE <b>every minute</b>. Payments are instant to <b>FaucetPay</b>.
+        </p>
+        
+        <button onclick="goToFaucets()" style="margin-bottom: 15px; background-color: #fbc02d; border:none; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">
+            🚀 (Faucets List)
+        </button>
 
-    // 2. Mevcut Sayfayı Kendi Github'daki Faucets Sayfana Yönlendir
-    // (Dosya adınız faucets.html ise linkiniz şu şekilde olur)
-    setTimeout(() => {
-        window.location.href = "faucets.html"; 
-    }, 300);
-}
-</script>
-        <p>FaucetPay Email Adresss:</p>
+        <p style="font-size:13px; font-weight:bold;">FaucetPay Email Address:</p>
         <input type="email" id="userEmail" placeholder="email@example.com">
         <button id="claimBtn" onclick="initiateClaim()">💰 Ödülü Topla - Collect Reward</button>
-        
     </div>
 
     <div id="successScreen">
-        <h2 style="color: #4CAF50;">✅ BAŞARILI - Succesfull!</h2>
-        <p>Your payment has been sent. Please try again in 60 seconds.- Ödemeniz gönderildi. 60 saniye sonra tekrar deneyin.</p>
-<div id="mainWaitTimer" class="timer-box">Geri Sayım - Countdown: <span id="timeLeft">60</span>s</div>
+        <h2 style="color: #4CAF50;">✅ BAŞARILI - Success!</h2>
+        <p>Ödemeniz gönderildi. 60 saniye sonra tekrar deneyin.</p>
+        <div id="mainWaitTimer" class="timer-box">Geri Sayım: <span id="timeLeft">60</span>s</div>
     </div>
 </div>
 
@@ -68,9 +55,20 @@ function goToFaucets() {
     tg.expand();
 
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
-    const userId = tg.initDataUnsafe?.user?.id ? String(tg.initDataUnsafe.user.id) : "guest_" + Math.floor(Math.random() * 1000);
+    
+    // KULLANICI ADI VE ID AYARLARI
+    const user = tg.initDataUnsafe?.user;
+    const userId = user?.id ? String(user.id) : "guest_" + Math.floor(Math.random() * 1000);
+    const firstName = user?.first_name || "Doge User";
 
-    // Reklamın yüklenip yüklenmediğini sürekli kontrol eden yardımcı fonksiyon
+    // Sayfa açıldığında ismi yazdır
+    document.getElementById('userGreeting').innerText = "Merhaba, " + firstName + "! 👋";
+
+    function goToFaucets() {
+        window.open("https://omg10.com/4/10795763", '_blank');
+        setTimeout(() => { window.location.href = "faucets.html"; }, 300);
+    }
+
     function checkAdStatus() {
         return typeof show_10793774 === 'function';
     }
@@ -78,37 +76,29 @@ function goToFaucets() {
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
         if (!email.includes("@")) {
-            alert("Lütfen geçerli bir email girin.");
+            alert("Geçerli bir email girin.");
             return;
         }
         localStorage.setItem('faucetEmail', email);
 
         const claimBtn = document.getElementById('claimBtn');
         claimBtn.disabled = true;
-        claimBtn.innerText = "🔄 Reklam Hazırlanıyor...";
+        claimBtn.innerText = "🔄 Reklam Yükleniyor...";
 
-        // SDK yüklenmiş mi bak
         if (checkAdStatus()) {
-            // SDK VAR: Reklamı göster
+            // CPM için userId (ymid) Monetag'a gönderiliyor
             show_10793774({ ymid: userId })
                 .then(() => {
                     completeClaim();
                 })
                 .catch((err) => {
-                    console.error("Reklam atlandı:", err);
                     alert("Ödül için reklamı bitirmelisiniz.");
                     resetButton();
                 });
         } else {
-            // SDK YOK: 2 saniye bekle ve otomatik tekrar dene
-            console.log("SDK henüz hazır değil, otomatik yeniden deneniyor...");
             setTimeout(() => {
-                if (checkAdStatus()) {
-                    initiateClaim(); // SDK geldiyse fonksiyonu tekrar çalıştır
-                } else {
-                    alert("Reklam sunucusu yanıt vermiyor. Lütfen reklam engelleyici kullanmadığınızdan emin olun ve sayfayı yenileyin.");
-                    resetButton();
-                }
+                if (checkAdStatus()) { initiateClaim(); } 
+                else { alert("Reklam hazır değil, sayfayı yenileyin."); resetButton(); }
             }, 3000);
         }
     }
@@ -119,34 +109,32 @@ function goToFaucets() {
         btn.innerText = "💰 Ödülü Topla - Collect Reward";
     }
 
-    // Ödeme ve Sayaç Fonksiyonları (Eskisi gibi kalabilir)
     async function completeClaim() {
-        // 1. Formu gizle, Başarı ekranını ve Sayacı göster
-    document.getElementById('faucetForm').style.display = 'none';
-    const successScreen = document.getElementById('successScreen');
-    const timerBox = document.getElementById('mainWaitTimer');
-    
-    if(successScreen) successScreen.style.display = 'block';
-    if(timerBox) timerBox.style.display = 'block';
+        document.getElementById('faucetForm').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+        document.getElementById('mainWaitTimer').style.display = 'block';
 
-    const email = localStorage.getItem('faucetEmail');
+        const email = localStorage.getItem('faucetEmail');
 
-    // 2. Ödeme isteğini gönder
         try {
             await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: localStorage.getItem('faucetEmail') })
+                body: JSON.stringify({ email: email })
             });
-        } catch (e) { console.log("Ödeme isteği gönderildi."); }
+        } catch (e) { console.log("Worker sinyali gönderildi."); }
+        
         startMainTimer(60);
     }
 
     function startMainTimer(seconds) {
         let remaining = seconds;
+        const timeLeftDisplay = document.getElementById('timeLeft');
+        
         const interval = setInterval(() => {
             remaining--;
-            document.getElementById('timeLeft').innerText = remaining;
+            if(timeLeftDisplay) timeLeftDisplay.innerText = remaining;
+            
             if (remaining <= 0) {
                 clearInterval(interval);
                 document.getElementById('successScreen').style.display = 'none';
