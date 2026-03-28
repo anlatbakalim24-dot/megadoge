@@ -68,29 +68,41 @@ function goToFaucets() {
     tg.expand();
 
     const WORKER_URL = "https://young-cell-f414.anlatbakalim24.workers.dev/";
-    const ZONE_ID = "10793774"; 
-    
-    // --- 0. KULLANICIYI İSMİYLE KARŞILAMA ---
-    // HTML kısmında id="userGreeting" olan bir element eklediysen oraya ismi yazar.
     const user = tg.initDataUnsafe?.user;
-    const greetingMsg = user?.first_name ? `Hello, ${user.first_name}! 👋` : "Hello, Guest! 👋";
-    
-    // Eğer HTML'de bir yer ayırmadıysan, ismi konsola ve ymid'ye gönderiyoruz.
     const userId = user?.id ? String(user.id) : "guest_" + Math.floor(Math.random() * 1000000);
 
-    // --- 1. REKLAMI ÖN YÜKLEME (Preload) ---
-    function preloadAd() {
+    // --- 1. REKLAMI YÜKLEME VE KONTROL FONKSİYONU ---
+    function tryShowAd() {
+        const claimBtn = document.getElementById('claimBtn');
+        
+        // Monetag SDK'sı yüklendi mi kontrol et
         if (typeof show_10793774 === 'function') {
-            // ymid olarak Telegram ID'sini string olarak gönderiyoruz (CPM için kritik)
-            show_10793774({ type: 'preload', ymid: userId })
-                .then(() => console.log("Reklam ön yüklendi. Kullanıcı ID:", userId))
-                .catch(() => console.log("Ön yükleme şu an yapılamıyor."));
+            claimBtn.innerText = "🔄 Reklam Açılıyor...";
+            
+            show_10793774({ ymid: userId })
+                .then(() => {
+                    console.log('Reklam Başarılı');
+                    completeClaim();
+                })
+                .catch((err) => {
+                    console.error("Reklam Hatası:", err);
+                    alert("Ödül için reklamı sonuna kadar izlemelisiniz!");
+                    resetButton();
+                });
+        } else {
+            // SDK hala yoksa manuel olarak tekrar yüklemeyi dene (Zorlama)
+            console.log("SDK bulunamadı, yeniden deneniyor...");
+            alert("Reklam sistemi yükleniyor, lütfen 3 saniye sonra tekrar deneyin.");
+            resetButton();
+            
+            // SDK'yı tekrar çağırmaya zorla (Eğer engellendiyse)
+            const script = document.createElement('script');
+            script.src = 'https://alwingulla.com/act/files/tag.min.js?z=10793774';
+            document.head.appendChild(script);
         }
     }
-    
-    setTimeout(preloadAd, 2000);
 
-    // --- 2. BUTONA TIKLANDIĞINDA ÇALIŞAN FONKSİYON ---
+    // --- 2. ANA BUTON FONKSİYONU ---
     function initiateClaim() {
         const email = document.getElementById('userEmail').value;
         if (!email.includes("@")) {
@@ -101,31 +113,14 @@ function goToFaucets() {
 
         const claimBtn = document.getElementById('claimBtn');
         claimBtn.disabled = true;
-        claimBtn.innerText = "🔄 Reklam Açılıyor...";
+        
+        tryShowAd();
+    }
 
-        // --- 3. REKLAMI GÖSTER VE SONUCU BEKLE ---
-        if (typeof show_10793774 === 'function') {
-            // Monetag Kılavuzu: ymid parametresi gerçek kullanıcıyı doğrular
-            show_10793774({ ymid: userId })
-                .then(() => {
-                    // KULLANICI REKLAMI SONUNA KADAR İZLEDİ ✅
-                    console.log('Reklam başarıyla izlendi. ID:', userId);
-                    completeClaim(); 
-                    preloadAd();     
-                })
-                .catch((err) => {
-                    // REKLAM KAPATILDI VEYA HATA OLUŞTU ❌
-                    console.error("Reklam hatası:", err);
-                    alert("Ödül kazanmak için reklamı sonuna kadar izlemelisiniz!");
-                    claimBtn.disabled = false;
-                    claimBtn.innerText = "💰 Ödülü Topla";
-                });
-        } else {
-            alert("Reklam henüz hazır değil, lütfen birkaç saniye bekleyin.");
-            claimBtn.disabled = false;
-            claimBtn.innerText = "💰 Ödülü Topla";
-            preloadAd();
-        }
+    function resetButton() {
+        const btn = document.getElementById('claimBtn');
+        btn.disabled = false;
+        btn.innerText = "💰 Ödülü Topla - Collect Reward";
     }
 
     async function completeClaim() {
@@ -135,17 +130,14 @@ function goToFaucets() {
         const timerBox = document.getElementById('mainWaitTimer');
         if(timerBox) timerBox.style.display = 'block';
 
-        const email = localStorage.getItem('faucetEmail');
-
         try {
+            const email = localStorage.getItem('faucetEmail');
             await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
-        } catch (e) {
-            console.error("Ödeme hatası:", e);
-        }
+        } catch (e) { console.error("Ödeme hatası:", e); }
 
         startMainTimer(60);
     }
@@ -153,33 +145,27 @@ function goToFaucets() {
     function startMainTimer(seconds) {
         let remaining = seconds;
         const timeLeftSpan = document.getElementById('timeLeft');
-        
         const claimInterval = setInterval(() => {
             remaining--;
             if(timeLeftSpan) timeLeftSpan.innerText = remaining;
-            
             if (remaining <= 0) {
                 clearInterval(claimInterval);
-                
                 document.getElementById('successScreen').style.display = 'none';
                 document.getElementById('faucetForm').style.display = 'block';
-                
                 const timerBox = document.getElementById('mainWaitTimer');
                 if(timerBox) timerBox.style.display = 'none';
-                
-                const btn = document.getElementById('claimBtn');
-                btn.disabled = false;
-                btn.innerText = "💰 Ödülü Topla - Collect Reward";
+                resetButton();
             }
         }, 1000);
     }
 
-    // Uygulama ilk açıldığında isimi ekrana yazdır (Eğer HTML'de div varsa)
-    window.onload = function() {
-        const greetDiv = document.getElementById('userGreeting');
-        if(greetDiv) greetDiv.innerText = greetingMsg;
+    // İlk açılışta SDK'yı hazırla
+    window.onload = () => {
+        if (user?.first_name) {
+            const greetDiv = document.getElementById('userGreeting');
+            if(greetDiv) greetDiv.innerText = `Hello, ${user.first_name}! 👋`;
+        }
     };
 </script>
-
 </body>
 </html>
