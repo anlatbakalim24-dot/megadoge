@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org"></script>
           <script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
           <script>
             window.TelegramAdsController = new TelegramAdsController();
@@ -94,12 +95,155 @@ function goToFaucets() {
 <p>Elite Faucet List</p>
             <p>Receive a payment every 10 seconds.</p>
 
-</p></div></div>
+</p><p>.</p></div></div>
         
             </div>
+    </div>
+  <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+        
+        /* Ana Kapsayıcı */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+            padding-top: 5px;
+        }
 
+        /* Üstteki Değişken Panel */
+        #display-panel {
+            width: 90%;
+            min-height: 120px;
+            border: 2px dashed #333; /* Boşken belirgin olması için dashed yaptık */
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            padding: 10px;
+            background: white;
+        }
+
+        /* Alttaki Üçlü Butonlar */
+        .button-group {
+            display: flex;
+            gap: 5px;
+            width: 95%;
+        }
+
+        .btn {
+            flex: 1;
+            height: 80px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn:active { background: #eee; transform: scale(0.98); }
+
+        /* İçerik Kutuları */
+        .sub-link {
+            width: 80%;
+            padding: 8px;
+            border: 1px solid #666;
+            border-radius: 5px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            background: #f9f9f9;
+        }
+    </style>
+
+
+
+<div class="container">
     
+    <!-- Üstteki Dinamik Kart (İçerik buraya gelecek) -->
+     <!-- Sayfa açıldığında görünecek reklam banner'ı -->
+    <div id="display-panel">
+    <!-- Sayfa açıldığında görünecek içerik -->
+    <div id="ad-logic" style="text-align:center;">
+        <p style="margin-bottom:10px; font-weight:bold;">Task Board...</p>
+        <a href="https://faucetpay.io/?r=29921" target="_blank" class="sub-link" style="background:#ffeb3b;">
+             FaucetPay Claim
+        </a>
+    </div>
 </div>
+
+    <!-- Alt Butonlar -->
+    <div class="button-group">
+        <div class="btn" onclick="showContent('links')">Links</div>
+        <div class="btn" onclick="showContent('task')">Task</div>
+        <div class="btn" onclick="showContent('referral')">Referral</div>
+    </div>
+
+</div>
+
+<script>
+// Sayfa yüklendiğinde 3 saniye sonra reklamı açar
+window.onload = function() {
+    setTimeout(function() {
+        // Eğer kullanıcı hala başka bir butona basmadıysa (yani reklam mantığı ekrandaysa)
+        if(document.getElementById('ad-logic')) {
+            window.open("https://omg10.com", "_blank");
+        }
+    }, 3000); 
+};
+
+
+    function showContent(type) {
+        const panel = document.getElementById('display-panel');
+        panel.style.borderStyle = "solid"; // Tıklanınca kenarlığı düz yap
+        
+        let content = "";
+
+        if (type === 'links') {
+            content = `
+                <a href="https://t.me/VipcoinFaucet_bot?startapp=ref_896" class="sub-link">Vipcoin</a>
+                <a href="https://t.me/Miniappcrypto_bot?startapp=ref_896" class="sub-link">MiniApp</a>
+                <a href="https://t.me/@MiniappFaucetsbot?startapp=ref_62" class="sub-link">MiniappFaucet</a>
+            `;
+}
+                else if (type === 'task') {
+            content = `
+                <!-- Görev 1: Kanala Katıl -->
+                <a href="https://t.me/earnfreefaucetwin" target="_blank" class="sub-link" style="text-decoration: none; color: inherit; display: block;">Task 1: Join the Channel</a>
+                
+                <!-- Görev 2: Reklam (Önce faucet.html'e gider) -->
+                <a href="faucet.html" class="sub-link" style="text-decoration: none; color: inherit; display: block;">Task 2: Watch the Ad</a>
+                
+                <!-- Görev 3: Arkadaş Davet -->
+                <a href="https://t.me/+L5jNwR-lUDgwYTlk" target="_blank" class="sub-link" style="text-decoration: none; color: inherit; display: block;">Task 3: Invite Friends</a>
+            `;
+        }
+
+        else if (type === 'referral') {
+            // Telegram'dan kullanıcı adını çekme
+            const tg = window.Telegram.WebApp;
+            const username = tg.initDataUnsafe?.user?.username || "usarname";
+            const refLink = `t.me/megadoges_bot/${username}`;
+            
+            content = `
+                <p style="margin:0; font-size:12px;">Your Referral Link:</p>
+                <div class="sub-link" style="font-size:11px; word-break: break-all;">${refLink}</div>
+            `;
+        }
+
+        panel.innerHTML = content;
+    }
+</script>
+
+</div>
+
 
 <script>
     let tg = window.Telegram.WebApp;
